@@ -1,0 +1,30 @@
+.main {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.coffeeSection {
+    padding: 60px 40px;
+    background-color: var(--color-bg);
+}
+
+.sectionTitle {
+    font-family: var(--font-heading);
+    font-size: 24px;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+}
+
+.loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--color-text-muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .coffeeSection {
+        padding: 40px 20px;
+    }
+}

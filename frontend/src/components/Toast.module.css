@@ -1,0 +1,67 @@
+.toast {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    background-color: #e74c3c;
+    color: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    z-index: 200;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.icon {
+    font-size: 18px;
+}
+
+.message {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+    line-height: 1;
+}
+
+.closeBtn:hover {
+    opacity: 1;
+}
+
+/* Desktop positioning */
+@media (min-width: 768px) {
+    .toast {
+        left: auto;
+        max-width: 400px;
+    }
+}

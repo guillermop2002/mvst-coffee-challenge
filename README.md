@@ -1,118 +1,218 @@
-# MVST Challenge
+# MVST Coffee Challenge ☕
 
-We're thrilled that you've made it to our MVST coding challenge! We are rooting for your success and hope to meet you in the challenge review! 🚀 If you have anything that we can help you with, just open an issue in the Github repo that was provided to you.
+> Full-stack coffee catalog application built with Next.js 13, NestJS, and PostgreSQL.
 
-## How to get started
+## 🚀 Quick Start
 
-To get started with the challenge, first read this README carefully. Then you can go on and
-read the READMEs inside the frontend and backend folders.
+### Prerequisites
+- Node.js 18+
+- Docker Desktop (for PostgreSQL)
 
-[Backend README](backend/README.md)
+### Setup
 
-[Frontend README](frontend/README.md)
+```bash
+# 1. Start PostgreSQL (requires Docker)
+cd backend
+npm run start:dev:db
 
-## Introduction
+# 2. Start the backend
+npm run start:dev
 
-This code challenge is a project that already contains a very basic backend and frontend structure.
+# 3. Seed the database (first time only)
+npm run seed
 
-The backend and frontend are not connected at the beginning of the challenge.
+# 4. In a new terminal, start the frontend
+cd frontend
+npm install
+npm run dev
+```
 
-Your task will be to implement some requirements using this repository, but you ultimately own the code. Don't feel like you need to stick to the structure provided, so feel free to refactor, readjust and improve it. Also, update this README if you want to describe your tech stack, give us instructions on how to run it, etc.
-
-## Task Description
-
----
-
-### Task 1 - Check the design
-
-Our designers have provided us a Figma file:
-https://www.figma.com/file/C4n0EqxCqKuu6Or4okx7qO/Coding-Challenge-2.0
-
-They expect us to build a fullstack web app that accurately follows their UI/UX requirements.
-
-### Task 2 - Coffee list :coffee:
-
-After running the frontend. You will see a list of items at "localhost:3000". This list is currently static on the frontend. The first task is to setup a database and connect the backend and the frontend to properly render the list with the data coming from the backend.
-
-### Task 3 - Adding a :coffee:
-
-Following the design, place a form to add a new coffee.
-You should be able to add a new coffee using the same structure/type (id, name, description, type, price and image url).
-Don't worry about uploading the image, get a URL from Google, an image repository, or serve it as a static asset. You can prefill the image url input and set it to readonly if you like. However, the field needs to be submitted to the backend.
-
-**⚠️ IMPORTANT ⚠️**
-
-Before adding a new Coffee, you should validate if an existing record with the same `name` already exists.
-
-### Finishing the task
-
-1. Create a Pull Request with the coding challenge.
-2. Tell MVST HR Team that you are done with it
-3. That is it :)
-
-### ⚠️ Rules
-
-1. The codebase provided is there to reduce some decision fatigue so you can focus on the coding. Please keep in mind that the decisions of folder structure, backend layers, architecture and other decisions have to be your own (‼️).
-2. Feel free to add any additional JS libraries and tell us in the README file why you chose them.
-3. The frontend has to be built with React. Next.js is there to help you have a quick start and focus on the coding. You can replace it with React Vite or similar if you feel like it would be faster.
-4. The data MUST be persisted in a database.
-5. We love NestJS so we provided some basic backend boilerplate, but it is your choice to use it. You are free to use Next.js as a fullstack framework.
-6. Provide a seeding mechanism to populate your DB.
-7. Match the design in the Figma file.
-8. If you don't feel comfortable using the `app` folder introduced in Next.js 13, you are allowed to use the `page` folder.
-
-### 🔍 What we will check
-
-To be transparent, these are some things we consider important in the challenge:
-
-1. The final outcome. The challenge is completed if the list of items is rendered on the frontend while fetching data from a backend server and we can add items to the list through the form.
-2. General skills of programming. Besides checking the outcome of your running project, we will check your code for the following: readability, organization, robustness, layering, reusability, and extensibility.
-3. Application of best practices and design patterns.
-4. The outcome in comparison with the design.
-
-### Extra Points
-
-So you are finished and feel like showing us some more? Here are a few things that we'd love to see:
-
-1. Testing. Your choice of what to test and how.
-2. Add some CSS animations or use Framer Motion
-3. If you haven't already, make the frontend SEO friendly
-4. Deploy your application
-
-## FAQ
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ---
 
-- I am not familiar with Next.js and NestJS
+## 🛠 Tech Stack
 
-  We don't expect you to know all the internals of these frameworks. What we do care about is the quality and the outcome of what you created. For the frontend, focus more on developing a good React application rather than the bells and whistles of Next.js. For the backend part, focus more on qualitative aspects like clean code and architecture and not NestJS specifics. The same applies if you choose to use Next.js as a fullstack framework.
+### Backend
+- **NestJS** - Chosen because MVST loves it and it provides excellent structure for APIs
+- **TypeORM** - Great ORM for TypeScript, integrates perfectly with NestJS
+- **PostgreSQL** - Robust relational database, perfect for this use case
+- **class-validator** - For DTO validation (ensures clean data from the frontend)
+- **Helmet** - Security middleware for HTTP headers (XSS, content-type sniffing, etc.)
+- **@nestjs/throttler** - Rate limiting to prevent abuse
 
-- I don't want to use tailwind
+### Frontend
+- **Next.js 13** (App Router) - Modern React framework with great DX
+- **CSS Modules** - Pure CSS as requested, no Tailwind or component libraries
+- **TypeScript** - Type safety across the entire codebase
 
-  Feel free to use pure CSS (we love it), styled-components, CSS preprocessors like SASS or any other library that you are comfortable with. Just don't cheat and use a full-on component library like MaterialUI or Bootstrap 😉 We need to know your CSS skills!
+### Why these choices?
+I kept the stack minimal on purpose. The challenge asked to show CSS skills, so I avoided any CSS frameworks. TypeORM was chosen over Prisma because it integrates more naturally with NestJS decorators and the repository pattern. I added security middleware (Helmet + rate limiting) because even in a coding challenge, it's good practice to think about production concerns.
 
-- The starter code won't start
+---
 
-  Check that you are using the correct node versions. We have provided an `.nvmrc` file so you can set it to Node 18 if you are using `nvm`. Also, make sure that you have docker installed if you want to use the DB starter script provided by us.
+## 📁 Project Structure
 
-- Some project dependencies are out of date. Can I update them?
+```
+coffee-challenge/
+├── backend/
+│   └── src/
+│       ├── coffee/           # Coffee module
+│       │   ├── coffee.entity.ts
+│       │   ├── coffee.service.ts
+│       │   ├── coffee.controller.ts
+│       │   └── dto/
+│       ├── app.module.ts     # Main module + DB config
+│       ├── main.ts           # App bootstrap + CORS
+│       └── seed.ts           # Database seeder
+│
+├── frontend/
+│   └── src/
+│       ├── app/              # Next.js app router
+│       │   ├── page.tsx      # Main page
+│       │   ├── layout.tsx    # Root layout + SEO
+│       │   └── globals.css   # Design system
+│       ├── components/       # React components
+│       ├── services/         # API layer
+│       └── types/            # TypeScript definitions
+```
 
-  Absolutely! Also ping us and let us know about this.
+---
+
+## ✨ Features Implemented
+
+- [x] Coffee list fetched from backend API
+- [x] Filter by type (All / Arabic / Robusta)
+- [x] Add new coffee via modal form
+- [x] Duplicate name validation (returns 409 Conflict)
+- [x] Error toast notification
+- [x] Responsive design (mobile + desktop)
+- [x] CSS hover animations on cards
+- [x] SEO meta tags
+- [x] **Unit tests** (23 tests, 100% pass rate)
+
+---
+
+## 🔐 Security Considerations
+
+Even though this is a coding challenge, I implemented security best practices:
+
+- **Helmet** - Sets security-related HTTP headers (X-Content-Type-Options, X-Frame-Options, etc.)
+- **Rate Limiting** - 10 requests per minute per IP to prevent API abuse
+- **URL Validation** - Only `http://` and `https://` URLs are accepted (prevents `javascript:` XSS attacks)
+- **Input Length Limits** - MaxLength on all string fields to prevent buffer overflow / DoS
+- **Price Validation** - Min/Max validators to ensure reasonable values
+- **Input Validation** - All DTOs are validated with class-validator before processing
+- **CORS** - Configured to only accept requests from the frontend origin
+- **Whitelist** - ValidationPipe strips unknown properties from requests
+
+---
+
+## 🎨 Design Decisions
+
+**Validation on both sides**: The backend validates with `class-validator` that the coffee type is either "Arabic" or "Robusta", and the DTO ensures all required fields are present. The frontend also validates before submission.
+
+**Error handling**: When a duplicate name is detected, the backend throws a `ConflictException` (409). The frontend catches this and shows a toast notification rather than crashing.
+
+**Component architecture**: Each component is self-contained with its own CSS module. This makes them reusable and easy to maintain.
+
+---
+
+## 🔌 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/coffees` | List all coffees |
+| GET | `/coffees?type=Arabic` | Filter by type |
+| POST | `/coffees` | Create new coffee |
+
+### Create Coffee Request Body
+```json
+{
+  "name": "Espresso",
+  "description": "Strong and bold",
+  "type": "Arabic",
+  "price": 15.00,
+  "imageUrl": "https://example.com/coffee.jpg"
+}
+```
+
+---
+
+## 🧪 Testing
+
+Run tests with:
+```bash
+cd backend
+npm test
+```
+
+**Test Coverage:**
+- `CoffeeService` - Business logic tests (findAll, create, duplicate validation)
+- `CoffeeController` - API endpoint tests
+- `CreateCoffeeDto` - Input validation tests including XSS prevention
+
+All 23 tests passing ✅
+
+---
 
 ## Feedback
 
----
-
 ### What would you improve if given more time?
 
-Please fill
+1. **E2E tests** - Add integration tests with supertest to verify full request/response cycles
+2. **Image upload** - Instead of just URLs, implement actual file upload with preview
+3. **Pagination** - For larger coffee lists with infinite scroll
+4. **Edit/Delete** - Complete CRUD operations with confirmation dialogs
+5. **Environment variables** - Move DB credentials to .env file for production
+6. **Docker Compose** - Single command to spin up the entire stack
 
 ### How was your experience doing this challenge?
 
-Please fill
+Really enjoyed it! The Figma design was clear and the requirements were well-defined. I appreciated that the boilerplate was provided but still gave freedom to structure things my own way. The NestJS + Next.js combo works great together. I took extra time to add security features (Helmet, rate limiting, input validation) because I believe even coding challenges should reflect production-quality thinking.
 
 ---
 
-Thanks and have a great challenge! 🔥
+## 🚀 Deployment
 
-MVST Team
+The application is configured for deployment on **Render.com** (free tier).
+
+### Environment Variables
+
+**Backend:**
+- `DATABASE_URL` - PostgreSQL connection string
+- `FRONTEND_URL` - Frontend URL for CORS
+- `PORT` - Server port (default: 5000)
+
+**Frontend:**
+- `NEXT_PUBLIC_API_URL` - Backend API URL
+
+### Docker Support
+
+Both backend and frontend include Dockerfiles for containerized deployment:
+```bash
+# Build backend
+cd backend && docker build -t coffee-backend .
+
+# Build frontend
+cd frontend && docker build -t coffee-frontend .
+```
+
+### Live Demo
+🔗 **[View Live Demo](https://coffee-frontend.onrender.com)** *(if deployed)*
+
+---
+
+## 📝 Notes
+
+- The database runs on `localhost:5432` via Docker (local development)
+- Backend serves on `http://localhost:5000`
+- Frontend serves on `http://localhost:3000`
+- CORS is configured to allow frontend-backend communication
+- In production, environment variables configure all URLs
+
+---
+
+Thanks for the challenge! 🔥
+
+

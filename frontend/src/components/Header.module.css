@@ -1,0 +1,43 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+}
+
+.logo {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.logoAccent {
+    color: var(--color-accent);
+    font-weight: 700;
+}
+
+.logoText {
+    color: var(--color-text);
+    font-weight: 300;
+}
+
+.createBtn {
+    padding: 10px 24px;
+    background-color: var(--color-accent);
+    color: var(--color-bg);
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.createBtn:hover {
+    background-color: var(--color-accent-hover);
+    transform: translateY(-2px);
+}

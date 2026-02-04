@@ -1,0 +1,46 @@
+# Render Blueprint - Infrastructure as Code
+# This file allows one-click deployment to Render.com
+
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: coffee-db
+    env: docker
+    plan: free
+    dockerfilePath: ./backend/db/Dockerfile.postgres
+    
+  # Backend API (NestJS)
+  - type: web
+    name: coffee-backend
+    env: node
+    plan: free
+    buildCommand: cd backend && npm ci && npm run build
+    startCommand: cd backend && node dist/main.js
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: coffee-db
+          property: connectionString
+      - key: FRONTEND_URL
+        value: https://coffee-frontend.onrender.com
+      - key: NODE_ENV
+        value: production
+    
+  # Frontend (Next.js)
+  - type: web
+    name: coffee-frontend
+    env: node
+    plan: free
+    buildCommand: cd frontend && npm ci && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://coffee-backend.onrender.com
+      - key: NODE_ENV
+        value: production
+
+databases:
+  - name: coffee-db
+    plan: free
+    databaseName: coffee_challenge
+    user: postgres
