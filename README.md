@@ -207,9 +207,6 @@ cd backend && docker build -t coffee-backend .
 cd frontend && docker build -t coffee-frontend .
 ```
 
-### Live Demo
-🔗 **[View Live Demo](https://coffee-frontend.onrender.com)** *(if deployed)*
-
 ---
 
 ## 📝 Notes
