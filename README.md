@@ -2,6 +2,15 @@
 
 > Full-stack coffee catalog application built with Next.js 13, NestJS, and PostgreSQL.
 
+## 🌐 Live Demo
+
+**[👉 View Live Demo](https://coffee-frontend-s5jb.onrender.com)**
+
+- **Frontend:** https://coffee-frontend-s5jb.onrender.com
+- **Backend API:** https://coffee-backend-o4g3.onrender.com/coffees
+
+> Note: Free tier on Render may spin down after inactivity. First request may take ~30 seconds.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
