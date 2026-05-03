@@ -1,0 +1,106 @@
+# Funding Rate Arbitrage Bot
+
+Bot de arbitraje delta-neutral sobre el funding rate de futuros perpetuos.
+La estrategia consiste en mantener spot largo + perpetuo corto del mismo
+activo, eliminando la exposición direccional, y cobrar el funding rate cada
+8 horas.
+
+> **Estado:** Fase 1/7 — capa de datos (lectura pública de Binance) + persistencia local.
+> Sin órdenes reales todavía.
+
+## Roadmap
+
+| Fase | Descripción | Estado |
+|------|-------------|--------|
+| 0 | Setup del proyecto | ✅ |
+| 1 | Capa de datos (funding rates en vivo + storage) | ✅ |
+| 2 | Motor de estrategia (scoring, sizing, rotación) | ⏳ |
+| 3 | Paper trading | ⏳ |
+| 4 | Backtesting con histórico | ⏳ |
+| 5 | Setup de cuenta + API keys (acción del usuario) | ⏳ |
+| 6 | Ejecución real (testnet → mainnet) | ⏳ |
+| 7 | Deploy 24/7 | ⏳ |
+
+## Requisitos
+
+- Python 3.11+
+- `pip` o `uv`
+
+## Instalación
+
+```bash
+# Clona el repo y entra
+git clone https://github.com/guillermop2002/mvst-coffee-challenge.git
+cd mvst-coffee-challenge
+git checkout claude/github-integration-setup-evNZs
+
+# Instala dependencias
+pip install -e .
+
+# Copia el archivo de entorno
+cp .env.example .env
+```
+
+En Fase 1 todavía no hace falta tocar `.env` ni tener cuenta en Binance.
+Las llamadas son a endpoints públicos.
+
+## Uso (Fase 1)
+
+```bash
+# Lista las top 20 oportunidades de funding ahora mismo
+funding-bot rates --top 20
+
+# Filtra por volumen mínimo (USD)
+funding-bot rates --min-volume 50000000
+
+# Descarga snapshot a la base de datos local
+funding-bot fetch
+
+# Descarga histórico de 30 días para un símbolo
+funding-bot history "BTC/USDT:USDT" --days 30
+
+# Ver estado de la base de datos
+funding-bot info
+```
+
+## Configuración
+
+Toda la configuración vive en `config/default.yaml`. Los parámetros clave:
+
+- `strategy.capital_usd` — capital total disponible.
+- `strategy.min_apy_threshold` — APY mínima para abrir posición.
+- `strategy.max_leverage` — apalancamiento máximo del short (default 3x).
+- `strategy.kelly_fraction` — fracción de Kelly para sizing (default 0.20).
+- `filters.min_24h_volume_usd` — volumen mínimo para considerar un par.
+
+## Tests
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
+
+## Arquitectura
+
+```
+src/funding_bot/
+├── cli.py              # CLI con typer
+├── config.py           # Pydantic config + secrets
+├── exchanges/
+│   └── binance.py      # ccxt wrapper, FundingSnapshot, TickerSnapshot
+└── storage/
+    └── db.py           # SQLite persistencia
+
+config/default.yaml     # Parámetros del bot
+tests/                  # pytest
+```
+
+## Seguridad
+
+- Los `.env` están en `.gitignore`. Nunca subir API keys.
+- Las API keys que se usen en Fase 6 deben tener permisos:
+  - ✅ Read
+  - ✅ Spot Trading
+  - ✅ Futures Trading
+  - ❌ Withdraw (NO habilitar)
+- Whitelist de IP recomendada en Binance.

@@ -1,0 +1,35 @@
+# =====================================================
+# Funding Rate Bot - Default Configuration
+# =====================================================
+
+exchange:
+  name: binance
+  market_type: future
+  rate_limit_ms: 200
+
+# Strategy parameters (used in Fase 2+)
+strategy:
+  capital_usd: 10000
+  max_concurrent_positions: 3
+  max_leverage: 3
+  min_apy_threshold: 12.0
+  rotation_hysteresis: 0.30
+  kelly_fraction: 0.20
+  max_position_pct: 0.40
+
+# Liquidity filters (avoid illiquid pairs)
+filters:
+  min_24h_volume_usd: 10000000
+  min_open_interest_usd: 5000000
+  exclude_symbols: []
+
+# Risk management
+risk:
+  max_drawdown_pct: 10.0
+  margin_safety_ratio: 0.50
+  funding_flip_close_threshold: 0.0
+
+# Storage
+storage:
+  database_path: data/funding_bot.db
+  retention_days: 365
