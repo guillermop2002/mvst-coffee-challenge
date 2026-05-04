@@ -11,6 +11,7 @@ from rich.table import Table
 
 from funding_bot.config import load_config
 from funding_bot.exchanges import BinanceClient
+from funding_bot.paper import PaperRunner, PaperStore
 from funding_bot.storage import Database
 from funding_bot.strategy import (
     ClosePosition,
@@ -220,6 +221,100 @@ def analyze(
         f"top opportunity: {opportunities[0].symbol if opportunities else 'none'}"
         + (f" @ {opportunities[0].apy:+.2f}% APY" if opportunities else "")
     )
+
+
+@app.command()
+def paper(
+    config_path: Path = typer.Option("config/default.yaml", "--config", "-c"),
+    interval: int = typer.Option(
+        300, "--interval", "-i", help="Seconds between ticks in loop mode."
+    ),
+    once: bool = typer.Option(False, "--once", help="Run a single tick and exit."),
+    reset: bool = typer.Option(False, "--reset", help="Reset paper session before run."),
+) -> None:
+    """Run the bot in paper-trading mode against live Binance market data."""
+    cfg = load_config(config_path)
+    if reset:
+        PaperStore(cfg.storage.database_path).reset()
+        console.print("[yellow]Paper session reset.[/yellow]")
+
+    runner = PaperRunner(cfg)
+    if once:
+        report = runner.run_tick()
+        console.print(
+            f"[green]Tick done.[/green] equity=${report.portfolio_equity:,.2f} "
+            f"opens={report.n_opens} closes={report.n_closes} "
+            f"fees=${report.fees_paid:.2f} funding=${report.funding_collected:.2f}"
+        )
+        return
+
+    console.print(
+        f"[green]Starting paper loop.[/green] interval={interval}s, Ctrl+C to stop."
+    )
+    try:
+        runner.run_loop(interval_seconds=interval)
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Stopped by user.[/yellow]")
+
+
+@app.command(name="paper-status")
+def paper_status(
+    config_path: Path = typer.Option("config/default.yaml", "--config", "-c"),
+    n_events: int = typer.Option(20, "--events", "-e"),
+) -> None:
+    """Show current paper portfolio + recent events."""
+    cfg = load_config(config_path)
+    store = PaperStore(cfg.storage.database_path)
+    session_id = store.get_or_create_session(cfg.strategy.capital_usd)
+    portfolio = store.load_portfolio(session_id)
+    if portfolio is None:
+        console.print("[yellow]No paper session yet. Run `funding-bot paper --once` first.[/yellow]")
+        return
+
+    pos_table = Table(title=f"Open positions ({portfolio.n_open})")
+    pos_table.add_column("Symbol", style="cyan")
+    pos_table.add_column("Notional", justify="right")
+    pos_table.add_column("Entry APY", justify="right")
+    pos_table.add_column("Last APY", justify="right")
+    pos_table.add_column("Funding $", justify="right", style="green")
+    for p in portfolio.positions.values():
+        pos_table.add_row(
+            p.symbol,
+            f"${p.notional_per_leg:,.0f}",
+            f"{p.entry_apy:+.2f}%",
+            f"{p.last_funding_apy:+.2f}%",
+            f"${p.funding_collected_usd:+.4f}",
+        )
+    console.print(pos_table)
+
+    summary = Table(title="Portfolio summary")
+    summary.add_column("Metric", style="cyan")
+    summary.add_column("Value", justify="right")
+    summary.add_row("Capital total", f"${portfolio.capital_total:,.2f}")
+    summary.add_row("Realized PnL", f"${portfolio.realized_pnl:+,.4f}")
+    summary.add_row("Funding collected", f"${portfolio.total_funding_collected:+,.4f}")
+    summary.add_row("Equity", f"${portfolio.equity:,.2f}")
+    summary.add_row("Open positions", str(portfolio.n_open))
+    console.print(summary)
+
+    events = store.recent_events(session_id, limit=n_events)
+    if events:
+        ev_table = Table(title=f"Last {len(events)} events")
+        ev_table.add_column("Time")
+        ev_table.add_column("Action")
+        ev_table.add_column("Symbol")
+        ev_table.add_column("PnL Δ", justify="right")
+        ev_table.add_column("Detail")
+        for e in events:
+            color = "green" if e.pnl_delta > 0 else ("red" if e.pnl_delta < 0 else "white")
+            ev_table.add_row(
+                e.timestamp.strftime("%Y-%m-%d %H:%M"),
+                e.action,
+                e.symbol,
+                f"[{color}]${e.pnl_delta:+.4f}[/{color}]",
+                e.detail,
+            )
+        console.print(ev_table)
 
 
 if __name__ == "__main__":

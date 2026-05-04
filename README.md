@@ -5,8 +5,7 @@ La estrategia consiste en mantener spot largo + perpetuo corto del mismo
 activo, eliminando la exposición direccional, y cobrar el funding rate cada
 8 horas.
 
-> **Estado:** Fase 2/7 — motor de estrategia (scoring, sizing, rotación)
-> implementado. Sin órdenes reales todavía.
+> **Estado:** Fase 3/7 — paper trading sobre datos en vivo, sin dinero real.
 
 ## Roadmap
 
@@ -15,7 +14,7 @@ activo, eliminando la exposición direccional, y cobrar el funding rate cada
 | 0 | Setup del proyecto | ✅ |
 | 1 | Capa de datos (funding rates en vivo + storage) | ✅ |
 | 2 | Motor de estrategia (scoring, sizing, rotación) | ✅ |
-| 3 | Paper trading | ⏳ |
+| 3 | Paper trading | ✅ |
 | 4 | Backtesting con histórico | ⏳ |
 | 5 | Setup de cuenta + API keys (acción del usuario) | ⏳ |
 | 6 | Ejecución real (testnet → mainnet) | ⏳ |
@@ -65,6 +64,19 @@ funding-bot info
 # Mostrar las decisiones que tomaría el bot ahora mismo
 # (con portfolio vacío + capital configurado)
 funding-bot analyze
+
+# Paper trading: una sola pasada (open/close/funding sobre datos reales,
+# sin dinero real)
+funding-bot paper --once
+
+# Paper trading en bucle (cada 5 min). Ctrl+C para parar.
+funding-bot paper --interval 300
+
+# Reiniciar la sesión de paper trading desde cero
+funding-bot paper --once --reset
+
+# Ver estado actual del portfolio paper + últimos eventos
+funding-bot paper-status
 ```
 
 ## Configuración
@@ -94,12 +106,16 @@ src/funding_bot/
 │   └── binance.py      # ccxt wrapper, FundingSnapshot, TickerSnapshot
 ├── storage/
 │   └── db.py           # SQLite persistencia
-└── strategy/
-    ├── scoring.py      # Opportunity scoring (APY × stability × liquidity)
-    ├── sizing.py       # Position sizer (Kelly fractional + leverage)
-    ├── portfolio.py    # Portfolio + Position dataclasses
-    ├── decisions.py    # OpenPosition / ClosePosition / HoldPosition
-    └── engine.py       # StrategyEngine (close → rotate → open)
+├── strategy/
+│   ├── scoring.py      # Opportunity scoring (APY × stability × liquidity)
+│   ├── sizing.py       # Position sizer (Kelly fractional + leverage)
+│   ├── portfolio.py    # Portfolio + Position dataclasses
+│   ├── decisions.py    # OpenPosition / ClosePosition / HoldPosition
+│   └── engine.py       # StrategyEngine (close → rotate → open)
+└── paper/
+    ├── executor.py     # PaperExecutor (simulated fills, fee model)
+    ├── persistence.py  # PaperStore (SQLite portfolio + event log)
+    └── runner.py       # PaperRunner (one tick or loop)
 
 config/default.yaml     # Parámetros del bot
 tests/                  # pytest
