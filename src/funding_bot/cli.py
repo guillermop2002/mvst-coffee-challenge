@@ -9,6 +9,7 @@ from loguru import logger
 from rich.console import Console
 from rich.table import Table
 
+from funding_bot.backtest import BacktestRunner, HistoricalLoader
 from funding_bot.config import load_config
 from funding_bot.exchanges import BinanceClient
 from funding_bot.paper import PaperRunner, PaperStore
@@ -315,6 +316,89 @@ def paper_status(
                 e.detail,
             )
         console.print(ev_table)
+
+
+@app.command(name="backtest-download")
+def backtest_download(
+    config_path: Path = typer.Option("config/default.yaml", "--config", "-c"),
+    days: int = typer.Option(90, "--days", "-d"),
+    top_n: int = typer.Option(
+        20, "--top-n", help="Use the top-N current opportunities by funding APY."
+    ),
+    symbols: list[str] = typer.Option(
+        None, "--symbol", "-s", help="Override list of symbols to download."
+    ),
+    db: Path = typer.Option(
+        Path("data/historical.db"), "--db", help="Path to historical SQLite DB."
+    ),
+) -> None:
+    """Download historical funding-rate prints from Binance."""
+    cfg = load_config(config_path)
+    client = BinanceClient(rate_limit_ms=cfg.exchange.rate_limit_ms)
+
+    if not symbols:
+        snaps = client.fetch_funding_rates()
+        snaps.sort(key=lambda s: s.apy, reverse=True)
+        symbols = [s.symbol for s in snaps[:top_n]]
+        console.print(
+            f"[cyan]Selected top {top_n} symbols by current APY:[/cyan] "
+            f"{', '.join(symbols[:5])}..."
+        )
+
+    loader = HistoricalLoader(db)
+    total = loader.download(client, symbols, days=days)
+    console.print(
+        f"[green]Downloaded {total} prints[/green] across {len(symbols)} symbols "
+        f"(last {days} days) -> {db}"
+    )
+
+
+@app.command(name="backtest-run")
+def backtest_run(
+    config_path: Path = typer.Option("config/default.yaml", "--config", "-c"),
+    db: Path = typer.Option(
+        Path("data/historical.db"), "--db", help="Historical funding DB."
+    ),
+    start_days_ago: int = typer.Option(
+        90, "--start-days-ago", help="Backtest start = now - N days."
+    ),
+    end_days_ago: int = typer.Option(
+        0, "--end-days-ago", help="Backtest end = now - N days (0 = now)."
+    ),
+    show_curve: bool = typer.Option(
+        False, "--curve", help="Show last 20 equity-curve points."
+    ),
+) -> None:
+    """Replay historical funding data through the strategy."""
+    from datetime import datetime, timedelta, timezone
+
+    cfg = load_config(config_path)
+    loader = HistoricalLoader(db)
+    if not loader.symbols():
+        console.print(
+            "[yellow]No historical data found. "
+            "Run `funding-bot backtest-download` first.[/yellow]"
+        )
+        raise typer.Exit(code=1)
+
+    now = datetime.now(tz=timezone.utc)
+    start = now - timedelta(days=start_days_ago)
+    end = now - timedelta(days=end_days_ago)
+
+    runner = BacktestRunner(cfg, loader)
+    result = runner.run(start=start, end=end)
+
+    console.print()
+    console.print(f"[bold cyan]Backtest results[/bold cyan]")
+    console.print(result.metrics.render())
+
+    if show_curve and result.equity_curve:
+        table = Table(title="Equity curve (last 20 points)")
+        table.add_column("Timestamp")
+        table.add_column("Equity", justify="right")
+        for ts, eq in result.equity_curve[-20:]:
+            table.add_row(ts.strftime("%Y-%m-%d %H:%M"), f"${eq:,.2f}")
+        console.print(table)
 
 
 if __name__ == "__main__":

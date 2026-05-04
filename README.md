@@ -5,7 +5,7 @@ La estrategia consiste en mantener spot largo + perpetuo corto del mismo
 activo, eliminando la exposición direccional, y cobrar el funding rate cada
 8 horas.
 
-> **Estado:** Fase 3/7 — paper trading sobre datos en vivo, sin dinero real.
+> **Estado:** Fase 4/7 — backtesting sobre datos históricos.
 
 ## Roadmap
 
@@ -15,7 +15,7 @@ activo, eliminando la exposición direccional, y cobrar el funding rate cada
 | 1 | Capa de datos (funding rates en vivo + storage) | ✅ |
 | 2 | Motor de estrategia (scoring, sizing, rotación) | ✅ |
 | 3 | Paper trading | ✅ |
-| 4 | Backtesting con histórico | ⏳ |
+| 4 | Backtesting con histórico | ✅ |
 | 5 | Setup de cuenta + API keys (acción del usuario) | ⏳ |
 | 6 | Ejecución real (testnet → mainnet) | ⏳ |
 | 7 | Deploy 24/7 | ⏳ |
@@ -77,6 +77,12 @@ funding-bot paper --once --reset
 
 # Ver estado actual del portfolio paper + últimos eventos
 funding-bot paper-status
+
+# Backtesting: descargar histórico de los últimos 90 días para top 20 pares
+funding-bot backtest-download --days 90 --top-n 20
+
+# Replay del histórico contra la estrategia
+funding-bot backtest-run --start-days-ago 90 --curve
 ```
 
 ## Configuración
@@ -112,10 +118,14 @@ src/funding_bot/
 │   ├── portfolio.py    # Portfolio + Position dataclasses
 │   ├── decisions.py    # OpenPosition / ClosePosition / HoldPosition
 │   └── engine.py       # StrategyEngine (close → rotate → open)
-└── paper/
-    ├── executor.py     # PaperExecutor (simulated fills, fee model)
-    ├── persistence.py  # PaperStore (SQLite portfolio + event log)
-    └── runner.py       # PaperRunner (one tick or loop)
+├── paper/
+│   ├── executor.py     # PaperExecutor (simulated fills, fee model)
+│   ├── persistence.py  # PaperStore (SQLite portfolio + event log)
+│   └── runner.py       # PaperRunner (one tick or loop)
+└── backtest/
+    ├── data.py         # HistoricalLoader (download + chronological replay)
+    ├── runner.py       # BacktestRunner (replay → engine → executor)
+    └── metrics.py      # APY, max drawdown, Sharpe, win rate
 
 config/default.yaml     # Parámetros del bot
 tests/                  # pytest
