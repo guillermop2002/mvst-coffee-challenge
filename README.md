@@ -5,8 +5,8 @@ La estrategia consiste en mantener spot largo + perpetuo corto del mismo
 activo, eliminando la exposición direccional, y cobrar el funding rate cada
 8 horas.
 
-> **Estado:** Fase 1/7 — capa de datos (lectura pública de Binance) + persistencia local.
-> Sin órdenes reales todavía.
+> **Estado:** Fase 2/7 — motor de estrategia (scoring, sizing, rotación)
+> implementado. Sin órdenes reales todavía.
 
 ## Roadmap
 
@@ -14,7 +14,7 @@ activo, eliminando la exposición direccional, y cobrar el funding rate cada
 |------|-------------|--------|
 | 0 | Setup del proyecto | ✅ |
 | 1 | Capa de datos (funding rates en vivo + storage) | ✅ |
-| 2 | Motor de estrategia (scoring, sizing, rotación) | ⏳ |
+| 2 | Motor de estrategia (scoring, sizing, rotación) | ✅ |
 | 3 | Paper trading | ⏳ |
 | 4 | Backtesting con histórico | ⏳ |
 | 5 | Setup de cuenta + API keys (acción del usuario) | ⏳ |
@@ -61,6 +61,10 @@ funding-bot history "BTC/USDT:USDT" --days 30
 
 # Ver estado de la base de datos
 funding-bot info
+
+# Mostrar las decisiones que tomaría el bot ahora mismo
+# (con portfolio vacío + capital configurado)
+funding-bot analyze
 ```
 
 ## Configuración
@@ -88,8 +92,14 @@ src/funding_bot/
 ├── config.py           # Pydantic config + secrets
 ├── exchanges/
 │   └── binance.py      # ccxt wrapper, FundingSnapshot, TickerSnapshot
-└── storage/
-    └── db.py           # SQLite persistencia
+├── storage/
+│   └── db.py           # SQLite persistencia
+└── strategy/
+    ├── scoring.py      # Opportunity scoring (APY × stability × liquidity)
+    ├── sizing.py       # Position sizer (Kelly fractional + leverage)
+    ├── portfolio.py    # Portfolio + Position dataclasses
+    ├── decisions.py    # OpenPosition / ClosePosition / HoldPosition
+    └── engine.py       # StrategyEngine (close → rotate → open)
 
 config/default.yaml     # Parámetros del bot
 tests/                  # pytest

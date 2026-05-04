@@ -12,6 +12,14 @@ from rich.table import Table
 from funding_bot.config import load_config
 from funding_bot.exchanges import BinanceClient
 from funding_bot.storage import Database
+from funding_bot.strategy import (
+    ClosePosition,
+    HoldPosition,
+    OpenPosition,
+    Portfolio,
+    StrategyEngine,
+    score_opportunities,
+)
 
 
 app = typer.Typer(
@@ -137,6 +145,81 @@ def info(
     table.add_row("Min APY threshold", f"{cfg.strategy.min_apy_threshold:.1f}%")
     table.add_row("Max leverage", f"{cfg.strategy.max_leverage:.1f}x")
     console.print(table)
+
+
+@app.command()
+def analyze(
+    config_path: Path = typer.Option("config/default.yaml", "--config", "-c"),
+) -> None:
+    """Show the decisions the bot would make right now (empty portfolio)."""
+    cfg = load_config(config_path)
+    client = BinanceClient(rate_limit_ms=cfg.exchange.rate_limit_ms)
+
+    snapshots = client.fetch_funding_rates()
+    tickers = client.fetch_tickers()
+
+    opportunities = score_opportunities(
+        snapshots,
+        tickers,
+        min_volume_usd=cfg.filters.min_24h_volume_usd,
+        excluded=cfg.filters.exclude_symbols,
+    )
+
+    portfolio = Portfolio(capital_total=cfg.strategy.capital_usd)
+    engine = StrategyEngine(cfg.strategy)
+    decisions = engine.decide(opportunities=opportunities, portfolio=portfolio)
+
+    table = Table(
+        title=f"Bot decisions (capital ${cfg.strategy.capital_usd:,.0f}, "
+        f"max {cfg.strategy.max_concurrent_positions} positions)"
+    )
+    table.add_column("Action", style="bold")
+    table.add_column("Symbol")
+    table.add_column("APY", justify="right")
+    table.add_column("Score", justify="right")
+    table.add_column("Notional/leg", justify="right")
+    table.add_column("Capital used", justify="right")
+    table.add_column("Reason")
+
+    for d in decisions:
+        if isinstance(d, OpenPosition):
+            table.add_row(
+                "[green]OPEN[/green]",
+                d.symbol,
+                f"{d.opportunity.apy:+.2f}%",
+                f"{d.opportunity.score:.2f}",
+                f"${d.sizing.notional_per_leg:,.0f}",
+                f"${d.sizing.capital_used:,.0f}",
+                d.reason,
+            )
+        elif isinstance(d, ClosePosition):
+            table.add_row(
+                "[red]CLOSE[/red]",
+                d.symbol,
+                f"{d.current_apy:+.2f}%",
+                "-",
+                "-",
+                "-",
+                d.reason,
+            )
+        elif isinstance(d, HoldPosition):
+            table.add_row(
+                "[yellow]HOLD[/yellow]",
+                d.symbol,
+                f"{d.current_apy:+.2f}%",
+                "-",
+                "-",
+                "-",
+                "-",
+            )
+
+    console.print(table)
+    n_open = sum(1 for d in decisions if isinstance(d, OpenPosition))
+    console.print(
+        f"\n[bold]Summary:[/bold] {n_open} position(s) to open, "
+        f"top opportunity: {opportunities[0].symbol if opportunities else 'none'}"
+        + (f" @ {opportunities[0].apy:+.2f}% APY" if opportunities else "")
+    )
 
 
 if __name__ == "__main__":
